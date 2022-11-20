@@ -1,0 +1,55 @@
+name: Develop
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  api-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Use AWS CLI
+        uses: unfor19/install-aws-cli-action@v1
+        with:
+          version: 2
+
+      - name: Build Docker image
+        id: build-docker-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          DOCKER_BUILDKIT: 1
+        run: |
+          docker build -t dermoapp-api .
+
+      - name: Push Flask image
+        id: push-flask-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: latest
+        run: |
+          docker tag dermoapp-api $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          aws_account_id=$(echo $ECR_REGISTRY | grep -o -E '^[0-9]+')
+          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "::set-output name=aws_account_id::$aws_account_id"
+
+      - name: Flask deployment
+        id: deploy-flask-image
+        run: |
+          aws ecs update-service --cluster Production --service dermoapp-service --force-new-deployment
+          aws ecs wait services-stable --cluster Production --services dermoapp-service

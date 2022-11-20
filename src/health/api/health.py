@@ -8,9 +8,3 @@ health = Blueprint('health', __name__)
 @inject
 def check():
     return "pong", 200
-
-
-@health.route('/fail/', methods=['GET'])
-@inject
-def fail():
-    return "pong", 404

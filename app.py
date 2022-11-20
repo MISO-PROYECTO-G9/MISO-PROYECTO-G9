@@ -9,6 +9,7 @@ app.register_blueprint(health, url_prefix='/health')
 
 app.config['JWT_SECRET_KEY'] = 'frase-secreta'
 
+
 def gunicorn():
     return app
 
