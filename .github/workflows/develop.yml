@@ -41,12 +41,11 @@ jobs:
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: latest
-          ECR_REPOSITORY: 128433652804.dkr.ecr.us-east-1.amazonaws.com
         run: |
-          docker tag dermoapp-api $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker tag dermoapp-api $ECR_REGISTRY/dermoapp-api:$IMAGE_TAG
+          docker push $ECR_REGISTRY/dermoapp-api:$IMAGE_TAG
           aws_account_id=$(echo $ECR_REGISTRY | grep -o -E '^[0-9]+')
-          echo "::set-output name=image::$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          echo "::set-output name=image::$ECR_REGISTRY/dermoapp-api:$IMAGE_TAG"
           echo "::set-output name=aws_account_id::$aws_account_id"
 
       - name: Flask deployment
